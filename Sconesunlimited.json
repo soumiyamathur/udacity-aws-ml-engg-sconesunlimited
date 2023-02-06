@@ -1,0 +1,82 @@
+{
+  "Comment": "A description of my state machine",
+  "StartAt": "sconesunlimited-serialize-target-data",
+  "States": {
+    "sconesunlimited-serialize-target-data": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "arn:aws:lambda:us-west-2:145734293004:function:sconesunlimited-serialize-target-data:$LATEST"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "sconesunlimited-data-classification"
+    },
+    "sconesunlimited-data-classification": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:us-west-2:145734293004:function:sconesunlimited-data-classification:$LATEST",
+        "Payload": {
+          "image_data.$": "$.body.image_data",
+          "s3_bucket.$": "$.body.s3_bucket",
+          "s3_key.$": "$.body.s3_key",
+          "inferences.$": "$.body.inferences"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "sconesunlimited-inference"
+    },
+    "sconesunlimited-inference": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:us-west-2:145734293004:function:sconesunlimited-inference:$LATEST",
+        "Payload": {
+          "image_data.$": "$.body.image_data",
+          "s3_bucket.$": "$.body.s3_bucket",
+          "s3_key.$": "$.body.s3_key",
+          "inferences.$": "$.body.inferences"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "End": true
+    }
+  }
+}
